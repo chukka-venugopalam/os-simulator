@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS Scheduling Simulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>OS Scheduling Simulator</h1>
+        
+        <section class="setup-section">
+            <div class="input-group">
+                <label for="processCount">Number of Processes:</label>
+                <input type="number" id="processCount" min="1" max="10" placeholder="e.g. 3">
+                <button onclick="createInputs()">Create Inputs</button>
+            </div>
+        </section>
+
+        <div id="dynamicInputs" class="dynamic-inputs"></div>
+
+        <section id="controls" class="hidden">
+            <div class="input-group">
+                <label>Algorithm:</label>
+                <select id="algorithm">
+                    <option value="FCFS">First Come First Serve (FCFS)</option>
+                </select>
+                <button class="run-btn" onclick="runFCFS()">Run Simulation</button>
+            </div>
+        </section>
+
+        <section id="outputSection" class="hidden">
+            <h2>Results Table</h2>
+            <div id="tableContainer"></div>
+
+            <h2>Gantt Chart</h2>
+            <div id="ganttChart" class="gantt-container"></div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
