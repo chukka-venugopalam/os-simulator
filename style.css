@@ -1,92 +1,93 @@
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f7f6;
-    color: #333;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f0f2f5;
     display: flex;
     justify-content: center;
-    padding: 20px;
+    padding: 40px 20px;
 }
 
 .container {
     background: white;
     padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     width: 100%;
-    max-width: 800px;
-    text-align: center;
+    max-width: 900px;
 }
 
-h1, h2 { color: #2c3e50; }
-
-.input-group { margin-bottom: 20px; }
+.hidden { display: none; }
+.input-group { margin: 20px 0; }
 
 input, select, button {
-    padding: 8px 12px;
-    margin: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
 }
 
 button {
-    background-color: #3498db;
+    background-color: #007bff;
     color: white;
-    cursor: pointer;
     border: none;
-    transition: background 0.3s;
+    cursor: pointer;
 }
 
-button:hover { background-color: #2980b9; }
+button:hover { background-color: #0056b3; }
+.run-btn { background-color: #28a745; width: 200px; font-weight: bold; }
 
-.run-btn { background-color: #27ae60; font-weight: bold; }
-.run-btn:hover { background-color: #219150; }
-
-.hidden { display: none; }
-
-/* Table Styling */
+/* Table */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
+    margin-bottom: 30px;
 }
 
-table, th, td {
-    border: 1px solid #ddd;
+th, td {
+    border: 1px solid #eee;
     padding: 12px;
     text-align: center;
 }
 
 th { background-color: #f8f9fa; }
 
-/* Gantt Chart Styling */
+/* Gantt Chart */
 .gantt-container {
     display: flex;
-    margin-top: 20px;
+    align-items: stretch;
+    height: 60px;
     border: 2px solid #333;
-    background: #eee;
-    overflow-x: auto;
+    margin-top: 20px;
+    background: #fafafa;
 }
 
 .gantt-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-right: 1px solid #333;
-    padding: 15px 0;
-    min-width: 60px;
-    background-color: #ecf0f1;
     position: relative;
+    background-color: #e3f2fd;
     font-weight: bold;
+    min-width: 40px; /* Ensures text fits */
+}
+
+.gantt-block.idle {
+    background-color: #efefef;
+    color: #999;
+    font-style: italic;
 }
 
 .gantt-time {
     position: absolute;
     bottom: -25px;
     right: -5px;
-    font-size: 0.8rem;
+    font-size: 12px;
     font-weight: normal;
+    color: #333;
 }
 
-.start-time {
+.start-time-label {
     position: absolute;
     bottom: -25px;
-    left: 0px;
-    font-size: 0.8rem;
+    left: 0;
+    font-size: 12px;
 }
