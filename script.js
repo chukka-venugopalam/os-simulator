@@ -2,38 +2,139 @@ function createInputs() {
     const count = document.getElementById('processCount').value;
     const container = document.getElementById('dynamicInputs');
     
-    if (count < 1) return alert("Please enter at least 1 process.");
-
-    let html = `<h3>Process Details</h3>
+    let html = `<h3>Enter Times</h3>
                 <table>
-                    <tr>
-                        <th>Process ID</th>
-                        <th>Arrival Time</th>
-                        <th>Burst Time</th>
-                    </tr>`;
-
+                    <tr><th>Process</th><th>Arrival Time</th><th>Burst Time</th></tr>`;
     for (let i = 1; i <= count; i++) {
         html += `<tr>
                     <td>P${i}</td>
-                    <td><input type="number" class="at-input" value="0" min="0"></td>
-                    <td><input type="number" class="bt-input" value="1" min="1"></td>
+                    <td><input type="number" class="at-input" value="${(i-1)*2}"></td>
+                    <td><input type="number" class="bt-input" value="${Math.floor(Math.random()*5)+1}"></td>
                  </tr>`;
     }
     html += `</table>`;
-    
     container.innerHTML = html;
     document.getElementById('controls').classList.remove('hidden');
 }
 
-/**
- * Reads data from the HTML inputs and returns an array of process objects.
- */
+function startSimulation() {
+    const algorithm = document.getElementById('algorithm').value;
+    let processes = getProcesses();
+    let result = [];
+
+    if (algorithm === "FCFS") {
+        result = runFCFS(processes);
+    } else if (algorithm === "SJF") {
+        result = runSJF(processes);
+    }
+
+    displayTable(result.processedData);
+    drawGantt(result.ganttData);
+    document.getElementById('outputSection').classList.remove('hidden');
+}
+
 function getProcesses() {
     const atInputs = document.querySelectorAll('.at-input');
     const btInputs = document.querySelectorAll('.bt-input');
-    let processes = [];
+    return Array.from(atInputs).map((at, i) => ({
+        id: `P${i + 1}`,
+        at: parseInt(at.value),
+        bt: parseInt(btInputs[i].value),
+        isDone: false
+    }));
+}
 
-    atInputs.forEach((input, index) => {
+
+function runFCFS(procs) {
+    procs.sort((a, b) => a.at - b.at);
+    let time = 0;
+    let gantt = [];
+
+    procs.forEach(p => {
+        if (time < p.at) {
+            gantt.push({ id: 'Idle', start: time, end: p.at, duration: p.at - time });
+            time = p.at;
+        }
+        let start = time;
+        p.ct = time + p.bt;
+        p.tat = p.ct - p.at;
+        p.wt = p.tat - p.bt;
+        time = p.ct;
+        gantt.push({ id: p.id, start, end: p.ct, duration: p.bt });
+    });
+
+    return { processedData: procs, ganttData: gantt };
+}
+
+function runSJF(procs) {
+    let time = 0;
+    let completed = 0;
+    let n = procs.length;
+    let gantt = [];
+    let result = [];
+
+    while (completed < n) {
+        // Find arrived processes that aren't done
+        let available = procs.filter(p => p.at <= time && !p.isDone);
+
+        if (available.length > 0) {
+            // Pick shortest burst time
+            available.sort((a, b) => a.bt - b.bt);
+            let p = available[0];
+            
+            let start = time;
+            p.ct = time + p.bt;
+            p.tat = p.ct - p.at;
+            p.wt = p.tat - p.bt;
+            p.isDone = true;
+            
+            gantt.push({ id: p.id, start, end: p.ct, duration: p.bt });
+            result.push(p);
+            time = p.ct;
+            completed++;
+        } else {
+            // CPU Idle
+            let nextArrival = Math.min(...procs.filter(p => !p.isDone).map(p => p.at));
+            gantt.push({ id: 'Idle', start: time, end: nextArrival, duration: nextArrival - time });
+            time = nextArrival;
+        }
+    }
+    return { processedData: result, ganttData: gantt };
+}
+
+function displayTable(procs) {
+    const container = document.getElementById('tableContainer');
+    let html = `<table><tr><th>Process</th><th>AT</th><th>BT</th><th>CT</th><th>TAT</th><th>WT</th></tr>`;
+    procs.forEach(p => {
+        html += `<tr><td>${p.id}</td><td>${p.at}</td><td>${p.bt}</td><td>${p.ct}</td><td>${p.tat}</td><td>${p.wt}</td></tr>`;
+    });
+    container.innerHTML = html + `</table>`;
+}
+
+function drawGantt(ganttData) {
+    const chart = document.getElementById('ganttChart');
+    chart.innerHTML = "";
+    
+    const totalTime = ganttData[ganttData.length - 1].end;
+
+    ganttData.forEach((block, i) => {
+        const div = document.createElement('div');
+        div.className = `gantt-block ${block.id === 'Idle' ? 'idle' : ''}`;
+    
+        const widthPercentage = (block.duration / totalTime) * 100;
+        div.style.width = widthPercentage + "%";
+        
+        div.innerHTML = `${block.id}`;
+
+        
+        if (i === 0) {
+            div.innerHTML += `<span class="start-time-label">${block.start}</span>`;
+        }
+        div.innerHTML += `<span class="gantt-time">${block.end}</span>`;
+        
+        chart.appendChild(div);
+    });
+}
         processes.push({
             id: `P${index + 1}`,
             at: parseInt(input.value),
@@ -43,29 +144,24 @@ function getProcesses() {
     return processes;
 }
 
-/**
- * Core Logic: First Come First Serve (FCFS)
- */
 function runFCFS() {
     let processes = getProcesses();
-
-    // 1. Sort by Arrival Time
     processes.sort((a, b) => a.at - b.at);
 
     let currentTime = 0;
     
-    // 2. Calculate Metrics
+    
     processes.forEach((p, index) => {
-        // If CPU is idle (current time is less than arrival), jump to arrival
+        
         if (currentTime < p.at) {
             currentTime = p.at;
         }
         
-        p.ct = currentTime + p.bt;      // Completion Time
-        p.tat = p.ct - p.at;            // Turnaround Time
-        p.wt = p.tat - p.bt;            // Waiting Time
+        p.ct = currentTime + p.bt;      
+        p.tat = p.ct - p.at;            
+        p.wt = p.tat - p.bt;            
         
-        currentTime = p.ct;             // Update time for next process
+        currentTime = p.ct;             
     });
 
     displayTable(processes);
@@ -73,9 +169,6 @@ function runFCFS() {
     document.getElementById('outputSection').classList.remove('hidden');
 }
 
-/**
- * Builds the results table dynamically.
- */
 function displayTable(processes) {
     const container = document.getElementById('tableContainer');
     let html = `<table>
@@ -102,19 +195,16 @@ function displayTable(processes) {
     container.innerHTML = html;
 }
 
-/**
- * Visualizes the execution order.
- */
 function drawGantt(processes) {
     const gantt = document.getElementById('ganttChart');
-    gantt.innerHTML = ""; // Clear old chart
+    gantt.innerHTML = "";
 
     processes.forEach((p, index) => {
         const block = document.createElement('div');
         block.className = 'gantt-block';
         block.innerText = p.id;
 
-        // Show start time only for the very first process
+    
         if (index === 0) {
             const startTime = document.createElement('span');
             startTime.className = 'start-time';
@@ -122,7 +212,7 @@ function drawGantt(processes) {
             block.appendChild(startTime);
         }
 
-        // Completion time label
+        
         const timeLabel = document.createElement('span');
         timeLabel.className = 'gantt-time';
         timeLabel.innerText = p.ct;
