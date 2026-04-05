@@ -4,9 +4,10 @@ A simple web-based simulator for CPU scheduling algorithms built using HTML, CSS
 
 ---
 
-## 🚀 Features
+## Features
 
 - First Come First Serve (FCFS) Scheduling
+- Shortest Job First (SJF) Scheduling
 - Dynamic input for processes (Arrival Time & Burst Time)
 - Calculates:
   - Completion Time (CT)
@@ -17,7 +18,7 @@ A simple web-based simulator for CPU scheduling algorithms built using HTML, CSS
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - HTML
 - CSS
@@ -25,14 +26,14 @@ A simple web-based simulator for CPU scheduling algorithms built using HTML, CSS
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 index.html   → Structure of the application
 style.css    → Styling and layout
 script.js    → Scheduling logic and DOM handling
 
 ---
 
-## ▶️ How to Run
+## How to Run
 
 1. Download or clone the repository  
 2. Open `index.html` in any browser  
@@ -42,23 +43,22 @@ script.js    → Scheduling logic and DOM handling
 
 ---
 
-## 📊 Sample Input
+## Sample Input
 P1: AT = 0, BT = 5
 P2: AT = 1, BT = 3
 P3: AT = 2, BT = 1
 
 ---
 
-## 📈 Output
+## Output
 
 - Table showing CT, TAT, WT  
 - Gantt Chart showing execution order  
 
 ---
 
-## 🔮 Future Improvements
+##  Future Improvements
 
-- Shortest Job First (SJF)
 - Round Robin (RR)
 - Priority Scheduling
 - Improved Gantt Chart visualization
@@ -66,13 +66,13 @@ P3: AT = 2, BT = 1
 
 ---
 
-## 🎯 Purpose
+##  Purpose
 
 This project is built to understand Operating System scheduling algorithms and visualize their behavior.
 
 ---
 
-## 👤 Author
+##  Author
 
 Chukka Venugopalam  
 CSE Student | GATE Aspirant
