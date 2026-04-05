@@ -1,8 +1,12 @@
+// --- 1. INPUT SECTION ---
+
 function createInputs() {
     const count = document.getElementById('processCount').value;
     const container = document.getElementById('dynamicInputs');
     
-    let html = `<h3>Enter Times</h3>
+    if (count < 1) return;
+
+    let html = `<h3>Process Details</h3>
                 <table>
                     <tr><th>Process</th><th>Arrival Time</th><th>Burst Time</th></tr>`;
     for (let i = 1; i <= count; i++) {
@@ -17,25 +21,10 @@ function createInputs() {
     document.getElementById('controls').classList.remove('hidden');
 }
 
-function startSimulation() {
-    const algorithm = document.getElementById('algorithm').value;
-    let processes = getProcesses();
-    let result = [];
-
-    if (algorithm === "FCFS") {
-        result = runFCFS(processes);
-    } else if (algorithm === "SJF") {
-        result = runSJF(processes);
-    }
-
-    displayTable(result.processedData);
-    drawGantt(result.ganttData);
-    document.getElementById('outputSection').classList.remove('hidden');
-}
-
 function getProcesses() {
     const atInputs = document.querySelectorAll('.at-input');
     const btInputs = document.querySelectorAll('.bt-input');
+    
     return Array.from(atInputs).map((at, i) => ({
         id: `P${i + 1}`,
         at: parseInt(at.value),
@@ -44,15 +33,34 @@ function getProcesses() {
     }));
 }
 
+// --- 2. CONTROLLER LAYER ---
+
+function startSimulation() {
+    const algorithm = document.getElementById('algorithm').value;
+    const processes = getProcesses();
+    let result;
+
+    if (algorithm === "FCFS") {
+        result = runFCFS(processes);
+    } else {
+        result = runSJF(processes);
+    }
+
+    displayTable(result.processedData);
+    drawGantt(result.ganttData);
+    document.getElementById('outputSection').classList.remove('hidden');
+}
+
+// --- 3. ALGORITHMS ---
 
 function runFCFS(procs) {
     procs.sort((a, b) => a.at - b.at);
     let time = 0;
-    let gantt = [];
+    let ganttData = [];
 
     procs.forEach(p => {
         if (time < p.at) {
-            gantt.push({ id: 'Idle', start: time, end: p.at, duration: p.at - time });
+            ganttData.push({ id: 'Idle', start: time, end: p.at, duration: p.at - time });
             time = p.at;
         }
         let start = time;
@@ -60,9 +68,75 @@ function runFCFS(procs) {
         p.tat = p.ct - p.at;
         p.wt = p.tat - p.bt;
         time = p.ct;
-        gantt.push({ id: p.id, start, end: p.ct, duration: p.bt });
+        ganttData.push({ id: p.id, start, end: p.ct, duration: p.bt });
     });
 
+    return { processedData: procs, ganttData };
+}
+
+function runSJF(procs) {
+    let time = 0;
+    let completed = 0;
+    let n = procs.length;
+    let ganttData = [];
+    let processedData = [];
+
+    while (completed < n) {
+        let available = procs.filter(p => p.at <= time && !p.isDone);
+
+        if (available.length > 0) {
+            available.sort((a, b) => a.bt - b.bt);
+            let p = available[0];
+            
+            let start = time;
+            p.ct = time + p.bt;
+            p.tat = p.ct - p.at;
+            p.wt = p.tat - p.bt;
+            p.isDone = true;
+            
+            ganttData.push({ id: p.id, start, end: p.ct, duration: p.bt });
+            processedData.push(p);
+            time = p.ct;
+            completed++;
+        } else {
+            let nextArrival = Math.min(...procs.filter(p => !p.isDone).map(p => p.at));
+            ganttData.push({ id: 'Idle', start: time, end: nextArrival, duration: nextArrival - time });
+            time = nextArrival;
+        }
+    }
+    return { processedData, ganttData };
+}
+
+// --- 4. OUTPUT RENDERERS ---
+
+function displayTable(procs) {
+    const container = document.getElementById('tableContainer');
+    let html = `<table><tr><th>Process</th><th>AT</th><th>BT</th><th>CT</th><th>TAT</th><th>WT</th></tr>`;
+    
+    procs.forEach(p => {
+        html += `<tr><td>${p.id}</td><td>${p.at}</td><td>${p.bt}</td><td>${p.ct}</td><td>${p.tat}</td><td>${p.wt}</td></tr>`;
+    });
+    
+    container.innerHTML = html + `</table>`;
+}
+
+function drawGantt(ganttData) {
+    const chart = document.getElementById('ganttChart');
+    chart.innerHTML = "";
+    const totalTime = ganttData[ganttData.length - 1].end;
+
+    ganttData.forEach((block, i) => {
+        const div = document.createElement('div');
+        div.className = `gantt-block ${block.id === 'Idle' ? 'idle' : ''}`;
+        div.style.width = (block.duration / totalTime * 100) + "%";
+        div.innerHTML = block.id;
+
+        if (i === 0) div.innerHTML += `<span class="start-time-label">${block.start}</span>`;
+        div.innerHTML += `<span class="gantt-time">${block.end}</span>`;
+        
+        chart.appendChild(div);
+    });
+}
     return { processedData: procs, ganttData: gantt };
 }
 
