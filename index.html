@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OS Scheduling Simulator</title>
+    <title>OS Scheduling Simulator v2</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
         <section class="setup-section">
             <div class="input-group">
                 <label for="processCount">Number of Processes:</label>
-                <input type="number" id="processCount" min="1" max="10" placeholder="e.g. 3">
+                <input type="number" id="processCount" min="1" max="10" value="3">
                 <button onclick="createInputs()">Create Inputs</button>
             </div>
         </section>
@@ -25,13 +25,15 @@
             <div class="input-group">
                 <label>Algorithm:</label>
                 <select id="algorithm">
-                    <option value="FCFS">First Come First Serve (FCFS)</option>
+                    <option value="FCFS">FCFS (First Come First Serve)</option>
+                    <option value="SJF">SJF (Shortest Job First)</option>
                 </select>
-                <button class="run-btn" onclick="runFCFS()">Run Simulation</button>
+                <button class="run-btn" onclick="startSimulation()">Run Simulation</button>
             </div>
         </section>
 
         <section id="outputSection" class="hidden">
+            <hr>
             <h2>Results Table</h2>
             <div id="tableContainer"></div>
 
