@@ -8,8 +8,10 @@ A simple web-based simulator for CPU scheduling algorithms built using HTML, CSS
 
 - First Come First Serve (FCFS) Scheduling
 - Shortest Job First (SJF) Scheduling
-- Round Robin(RR) Scheduling 
-- Dynamic input for processes (Arrival Time & Burst Time)
+- Round Robin(RR) Scheduling
+- Priority Scheduling
+- average Waiting time and Turn Around time 
+- Dynamic UI for algorithm-specific inputs
 - Calculates:
   - Completion Time (CT)
   - Turnaround Time (TAT)
@@ -59,8 +61,6 @@ P3: AT = 2, BT = 1
 ---
 
 ##  Future Improvements
-
-- Priority Scheduling
 - Improved Gantt Chart visualization
 - Better UI/UX
 
