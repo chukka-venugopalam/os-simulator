@@ -1,180 +1,368 @@
-function toggleQuantumInput() {
-    const algo = document.getElementById('algorithm').value;
-    const container = document.getElementById('quantumContainer');
-    algo === "RR" ? container.classList.remove('hidden') : container.classList.add('hidden');
+// --- UI Functions ---
+
+function checkAlgorithm() {
+    let algo = document.getElementById("algorithm").value;
+    
+    // Show/hide quantum input for Round Robin
+    if (algo === "RR") {
+        document.getElementById("quantumDiv").classList.remove("hidden");
+    } else {
+        document.getElementById("quantumDiv").classList.add("hidden");
+    }
+
+    // Show/hide priority column
+    let priorityCells = document.querySelectorAll(".priority-col");
+    for (let i = 0; i < priorityCells.length; i++) {
+        if (algo === "Priority") {
+            priorityCells[i].classList.remove("hidden");
+        } else {
+            priorityCells[i].classList.add("hidden");
+        }
+    }
 }
 
 function createInputs() {
-    const count = document.getElementById('processCount').value;
-    const container = document.getElementById('dynamicInputs');
-    if (count < 1) return;
+    let count = parseInt(document.getElementById("processCount").value);
+    let container = document.getElementById("dynamicInputs");
 
-    let html = `<h3>Process Details</h3>
-                <table>
-                    <tr><th>Process</th><th>Arrival Time</th><th>Burst Time</th></tr>`;
+    let tableHTML = `
+        <table>
+            <tr>
+                <th>Process</th>
+                <th>Arrival Time</th>
+                <th>Burst Time</th>
+                <th class="priority-col hidden">Priority</th>
+            </tr>
+    `;
+
     for (let i = 1; i <= count; i++) {
-        html += `<tr>
-                    <td>P${i}</td>
-                    <td><input type="number" class="at-input" value="${(i-1)*2}"></td>
-                    <td><input type="number" class="bt-input" value="${Math.floor(Math.random()*5)+2}"></td>
-                 </tr>`;
+        tableHTML += `
+            <tr>
+                <td>P${i}</td>
+                <td><input type="number" class="at-input" value="0" min="0"></td>
+                <td><input type="number" class="bt-input" value="5" min="1"></td>
+                <td class="priority-col hidden"><input type="number" class="priority-input" value="${i}" min="1"></td>
+            </tr>
+        `;
     }
-    html += `</table>`;
-    container.innerHTML = html;
-    document.getElementById('controls').classList.remove('hidden');
-    toggleQuantumInput();
+    
+    tableHTML += `</table>`;
+    container.innerHTML = tableHTML;
+    
+    document.getElementById("controls").classList.remove("hidden");
+    checkAlgorithm(); // Run this to set initial visibility of priority column
 }
 
+// Read inputs from table
 function getProcesses() {
-    return Array.from(document.querySelectorAll('.at-input')).map((at, i) => ({
-        id: `P${i + 1}`,
-        at: parseInt(at.value),
-        bt: parseInt(document.querySelectorAll('.bt-input')[i].value),
-        rem: parseInt(document.querySelectorAll('.bt-input')[i].value), // Remaining time for RR
-        isDone: false
-    }));
+    let atInputs = document.querySelectorAll(".at-input");
+    let btInputs = document.querySelectorAll(".bt-input");
+    let priorityInputs = document.querySelectorAll(".priority-input");
+    
+    let processes = [];
+    
+    for (let i = 0; i < atInputs.length; i++) {
+        processes.push({
+            id: "P" + (i + 1),
+            at: parseInt(atInputs[i].value),
+            bt: parseInt(btInputs[i].value),
+            priority: parseInt(priorityInputs[i].value),
+            rem: parseInt(btInputs[i].value), // Remaining time for RR
+            isDone: false
+        });
+    }
+    return processes;
 }
 
-// --- 2. CONTROLLER ---
+// --- Main Controller ---
 
 function startSimulation() {
-    const algo = document.getElementById('algorithm').value;
-    const processes = getProcesses();
+    let algo = document.getElementById("algorithm").value;
+    let processes = getProcesses();
     let result;
 
-    if (algo === "FCFS") result = runFCFS(processes);
-    else if (algo === "SJF") result = runSJF(processes);
-    else if (algo === "RR") {
-        const q = parseInt(document.getElementById('quantum').value) || 2;
-        result = runRR(processes, q);
+    if (algo === "FCFS") {
+        result = runFCFS(processes);
+    } else if (algo === "SJF") {
+        result = runSJF(processes);
+    } else if (algo === "Priority") {
+        result = runPriority(processes);
+    } else if (algo === "RR") {
+        let quantum = parseInt(document.getElementById("quantum").value);
+        result = runRR(processes, quantum);
     }
 
-    displayTable(result.processedData);
-    drawGantt(result.ganttData);
-    document.getElementById('outputSection').classList.remove('hidden');
+    displayResults(result.processes);
+    drawGanttChart(result.gantt);
+    document.getElementById("outputSection").classList.remove("hidden");
 }
 
-// --- 3. ALGORITHMS ---
+// --- Scheduling Algorithms ---
 
-function runFCFS(procs) {
-    procs.sort((a, b) => a.at - b.at);
-    let time = 0, gantt = [];
-    procs.forEach(p => {
+function runFCFS(processes) {
+    // Sort by arrival time
+    processes.sort((a, b) => a.at - b.at);
+    
+    let time = 0;
+    let gantt = [];
+
+    for (let i = 0; i < processes.length; i++) {
+        let p = processes[i];
+        
+        // Handle idle time if CPU is empty
         if (time < p.at) {
-            gantt.push({ id: 'Idle', start: time, end: p.at, duration: p.at - time });
+            gantt.push({ id: "Idle", start: time, end: p.at, duration: p.at - time });
             time = p.at;
         }
-        let start = time;
+
         p.ct = time + p.bt;
         p.tat = p.ct - p.at;
         p.wt = p.tat - p.bt;
+        
+        gantt.push({ id: p.id, start: time, end: p.ct, duration: p.bt });
         time = p.ct;
-        gantt.push({ id: p.id, start, end: p.ct, duration: p.bt });
-    });
-    return { processedData: procs, ganttData: gantt };
+    }
+
+    return { processes: processes, gantt: gantt };
 }
 
-function runSJF(procs) {
-    let time = 0, completed = 0, n = procs.length, gantt = [], res = [];
+function runSJF(processes) {
+    let time = 0, completed = 0;
+    let gantt = [], resultArray = [];
+    let n = processes.length;
+
     while (completed < n) {
-        let available = procs.filter(p => p.at <= time && !p.isDone);
+        // Find arrived processes
+        let available = [];
+        for (let i = 0; i < n; i++) {
+            if (processes[i].at <= time && processes[i].isDone === false) {
+                available.push(processes[i]);
+            }
+        }
+
         if (available.length > 0) {
+            // Sort by burst time
             available.sort((a, b) => a.bt - b.bt);
             let p = available[0];
-            let start = time;
+
             p.ct = time + p.bt;
             p.tat = p.ct - p.at;
             p.wt = p.tat - p.bt;
             p.isDone = true;
-            gantt.push({ id: p.id, start, end: p.ct, duration: p.bt });
-            res.push(p);
+
+            gantt.push({ id: p.id, start: time, end: p.ct, duration: p.bt });
+            resultArray.push(p);
+            
             time = p.ct;
             completed++;
         } else {
-            let nextAt = Math.min(...procs.filter(p => !p.isDone).map(p => p.at));
-            gantt.push({ id: 'Idle', start: time, end: nextAt, duration: nextAt - time });
-            time = nextAt;
+            // CPU is idle
+            let nextArrival = 9999;
+            for(let i=0; i<n; i++) {
+                if(!processes[i].isDone && processes[i].at < nextArrival) {
+                    nextArrival = processes[i].at;
+                }
+            }
+            gantt.push({ id: "Idle", start: time, end: nextArrival, duration: nextArrival - time });
+            time = nextArrival;
         }
     }
-    return { processedData: res, ganttData: gantt };
+    return { processes: resultArray, gantt: gantt };
 }
 
-function runRR(procs, q) {
-    let time = 0, completed = 0, n = procs.length;
-    let queue = [], gantt = [], res = [];
-    
-    // Sort initially by arrival
-    procs.sort((a, b) => a.at - b.at);
+function runPriority(processes) {
+    let time = 0, completed = 0;
+    let gantt = [], resultArray = [];
+    let n = processes.length;
 
     while (completed < n) {
-        // Add newly arrived processes to queue
-        procs.forEach(p => {
-            if (p.at <= time && !p.isDone && !queue.includes(p)) {
-                queue.push(p);
+        let available = [];
+        for (let i = 0; i < n; i++) {
+            if (processes[i].at <= time && processes[i].isDone === false) {
+                available.push(processes[i]);
             }
-        });
+        }
+
+        if (available.length > 0) {
+            // Sort by priority (lower number = higher priority)
+            available.sort((a, b) => a.priority - b.priority);
+            let p = available[0];
+
+            p.ct = time + p.bt;
+            p.tat = p.ct - p.at;
+            p.wt = p.tat - p.bt;
+            p.isDone = true;
+
+            gantt.push({ id: p.id, start: time, end: p.ct, duration: p.bt });
+            resultArray.push(p);
+            
+            time = p.ct;
+            completed++;
+        } else {
+            let nextArrival = 9999;
+            for(let i=0; i<n; i++) {
+                if(!processes[i].isDone && processes[i].at < nextArrival) {
+                    nextArrival = processes[i].at;
+                }
+            }
+            gantt.push({ id: "Idle", start: time, end: nextArrival, duration: nextArrival - time });
+            time = nextArrival;
+        }
+    }
+    return { processes: resultArray, gantt: gantt };
+}
+
+function runRR(processes, quantum) {
+    processes.sort((a, b) => a.at - b.at);
+    let time = 0, completed = 0, n = processes.length;
+    let queue = [], gantt = [], resultArray = [];
+
+    while (completed < n) {
+        // Add new arrivals to queue
+        for (let i = 0; i < n; i++) {
+            if (processes[i].at <= time && processes[i].isDone === false && !queue.includes(processes[i])) {
+                queue.push(processes[i]);
+            }
+        }
 
         if (queue.length > 0) {
             let p = queue.shift();
-            let start = time;
-            let take = Math.min(p.rem, q);
             
-            p.rem -= take;
-            time += take;
+            // Execute for either quantum or remaining time
+            let executeTime = p.rem;
+            if (p.rem > quantum) {
+                executeTime = quantum;
+            }
 
-            gantt.push({ id: p.id, start, end: time, duration: take });
+            let start = time;
+            p.rem = p.rem - executeTime;
+            time = time + executeTime;
 
-            // Check if any process arrived WHILE this one was running
-            procs.forEach(newP => {
-                if (newP.at <= time && !newP.isDone && !queue.includes(newP) && newP !== p) {
-                    queue.push(newP);
+            // Combine blocks if same process runs again immediately
+            if (gantt.length > 0 && gantt[gantt.length - 1].id === p.id) {
+                gantt[gantt.length - 1].end = time;
+                gantt[gantt.length - 1].duration += executeTime;
+            } else {
+                gantt.push({ id: p.id, start: start, end: time, duration: executeTime });
+            }
+
+            // Check arrivals during execution
+            for (let i = 0; i < n; i++) {
+                if (processes[i].at <= time && processes[i].isDone === false && !queue.includes(processes[i]) && processes[i] !== p) {
+                    queue.push(processes[i]);
                 }
-            });
+            }
 
             if (p.rem === 0) {
                 p.ct = time;
                 p.tat = p.ct - p.at;
                 p.wt = p.tat - p.bt;
                 p.isDone = true;
-                res.push(p);
+                resultArray.push(p);
                 completed++;
             } else {
-                queue.push(p); // Put back at end of queue
+                queue.push(p); // Go back to end of line
             }
         } else {
-            // Idle
-            let nextAt = Math.min(...procs.filter(p => !p.isDone).map(p => p.at));
-            gantt.push({ id: 'Idle', start: time, end: nextAt, duration: nextAt - time });
-            time = nextAt;
+            // Idle time
+            let nextArrival = 9999;
+            for(let i=0; i<n; i++) {
+                if(!processes[i].isDone && processes[i].at < nextArrival) {
+                    nextArrival = processes[i].at;
+                }
+            }
+            gantt.push({ id: "Idle", start: time, end: nextArrival, duration: nextArrival - time });
+            time = nextArrival;
         }
     }
-    return { processedData: res.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true})), ganttData: gantt };
-}
-
-// --- 4. RENDERERS ---
-
-function displayTable(procs) {
-    const container = document.getElementById('tableContainer');
-    let html = `<table><tr><th>Process</th><th>AT</th><th>BT</th><th>CT</th><th>TAT</th><th>WT</th></tr>`;
-    procs.forEach(p => {
-        html += `<tr><td>${p.id}</td><td>${p.at}</td><td>${p.bt}</td><td>${p.ct}</td><td>${p.tat}</td><td>${p.wt}</td></tr>`;
+    
+    // Sort array back to original P1, P2 order for table
+    resultArray.sort((a, b) => {
+        let numA = parseInt(a.id.replace('P', ''));
+        let numB = parseInt(b.id.replace('P', ''));
+        return numA - numB;
     });
-    container.innerHTML = html + `</table>`;
+
+    return { processes: resultArray, gantt: gantt };
 }
 
-function drawGantt(ganttData) {
-    const chart = document.getElementById('ganttChart');
-    chart.innerHTML = "";
-    const totalTime = ganttData[ganttData.length - 1].end;
+// --- Output Functions ---
 
-    ganttData.forEach((block, i) => {
-        const div = document.createElement('div');
-        div.className = `gantt-block ${block.id === 'Idle' ? 'idle' : ''}`;
-        div.style.width = (block.duration / totalTime * 100) + "%";
+function displayResults(processes) {
+    let tableContainer = document.getElementById("tableContainer");
+    let html = `
+        <table>
+            <tr>
+                <th>Process</th>
+                <th>Arrival Time</th>
+                <th>Burst Time</th>
+                <th>Completion Time</th>
+                <th>Turnaround Time</th>
+                <th>Waiting Time</th>
+            </tr>
+    `;
+
+    let sumTAT = 0;
+    let sumWT = 0;
+
+    for (let i = 0; i < processes.length; i++) {
+        let p = processes[i];
+        sumTAT += p.tat;
+        sumWT += p.wt;
+
+        html += `
+            <tr>
+                <td>${p.id}</td>
+                <td>${p.at}</td>
+                <td>${p.bt}</td>
+                <td>${p.ct}</td>
+                <td>${p.tat}</td>
+                <td>${p.wt}</td>
+            </tr>
+        `;
+    }
+
+    html += `</table>`;
+    tableContainer.innerHTML = html;
+
+    // Display Averages
+    let avgTAT = sumTAT / processes.length;
+    let avgWT = sumWT / processes.length;
+
+    document.getElementById("averages").innerHTML = 
+        `Average Turnaround Time: ${avgTAT.toFixed(2)} &nbsp;&nbsp;|&nbsp;&nbsp; Average Waiting Time: ${avgWT.toFixed(2)}`;
+}
+
+function drawGanttChart(gantt) {
+    let chartContainer = document.getElementById("ganttChart");
+    chartContainer.innerHTML = ""; // Clear old chart
+    
+    if (gantt.length === 0) return;
+
+    let totalTime = gantt[gantt.length - 1].end;
+
+    for (let i = 0; i < gantt.length; i++) {
+        let block = gantt[i];
+        
+        let div = document.createElement("div");
+        div.className = "gantt-block";
+        if (block.id === "Idle") {
+            div.classList.add("idle");
+        }
+
+        // Width based on percentage of total time
+        let widthPercent = (block.duration / totalTime) * 100;
+        div.style.width = widthPercent + "%";
         div.innerHTML = block.id;
-        if (i === 0) div.innerHTML += `<span class="start-time-label">${block.start}</span>`;
-        div.innerHTML += `<span class="gantt-time">${block.end}</span>`;
-        chart.appendChild(div);
-    });
-}
 
+        // Add 0 only on the very first block
+        if (i === 0) {
+            div.innerHTML += `<span class="start-time-label">${block.start}</span>`;
+        }
+        
+        // Add end time for every block
+        div.innerHTML += `<span class="gantt-time">${block.end}</span>`;
+        
+        chartContainer.appendChild(div);
+    }
+}
