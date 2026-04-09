@@ -10,10 +10,10 @@ function checkAlgorithm() {
         document.getElementById("quantumDiv").classList.add("hidden");
     }
 
-    // Show/hide priority column
+    // Show/hide priority column for both priority algorithms
     let priorityCells = document.querySelectorAll(".priority-col");
     for (let i = 0; i < priorityCells.length; i++) {
-        if (algo === "Priority") {
+        if (algo === "Priority" || algo === "Priority_Preemptive") {
             priorityCells[i].classList.remove("hidden");
         } else {
             priorityCells[i].classList.add("hidden");
@@ -50,24 +50,22 @@ function createInputs() {
     container.innerHTML = tableHTML;
     
     document.getElementById("controls").classList.remove("hidden");
-    checkAlgorithm(); // Run this to set initial visibility of priority column
+    checkAlgorithm(); 
 }
 
-// Read inputs from table
 function getProcesses() {
     let atInputs = document.querySelectorAll(".at-input");
     let btInputs = document.querySelectorAll(".bt-input");
     let priorityInputs = document.querySelectorAll(".priority-input");
     
     let processes = [];
-    
     for (let i = 0; i < atInputs.length; i++) {
         processes.push({
             id: "P" + (i + 1),
             at: parseInt(atInputs[i].value),
             bt: parseInt(btInputs[i].value),
             priority: parseInt(priorityInputs[i].value),
-            rem: parseInt(btInputs[i].value), // Remaining time for RR
+            rem: parseInt(btInputs[i].value), // Remaining time used for SRTF, Preemptive Priority, and RR
             isDone: false
         });
     }
@@ -85,8 +83,12 @@ function startSimulation() {
         result = runFCFS(processes);
     } else if (algo === "SJF") {
         result = runSJF(processes);
+    } else if (algo === "SRTF") {
+        result = runSRTF(processes);
     } else if (algo === "Priority") {
         result = runPriority(processes);
+    } else if (algo === "Priority_Preemptive") {
+        result = runPreemptivePriority(processes);
     } else if (algo === "RR") {
         let quantum = parseInt(document.getElementById("quantum").value);
         result = runRR(processes, quantum);
@@ -100,49 +102,34 @@ function startSimulation() {
 // --- Scheduling Algorithms ---
 
 function runFCFS(processes) {
-    // Sort by arrival time
     processes.sort((a, b) => a.at - b.at);
-    
     let time = 0;
     let gantt = [];
 
     for (let i = 0; i < processes.length; i++) {
         let p = processes[i];
-        
-        // Handle idle time if CPU is empty
         if (time < p.at) {
             gantt.push({ id: "Idle", start: time, end: p.at, duration: p.at - time });
             time = p.at;
         }
-
         p.ct = time + p.bt;
         p.tat = p.ct - p.at;
         p.wt = p.tat - p.bt;
-        
         gantt.push({ id: p.id, start: time, end: p.ct, duration: p.bt });
         time = p.ct;
     }
-
     return { processes: processes, gantt: gantt };
 }
 
 function runSJF(processes) {
-    let time = 0, completed = 0;
-    let gantt = [], resultArray = [];
+    let time = 0, completed = 0, gantt = [], resultArray = [];
     let n = processes.length;
 
     while (completed < n) {
-        // Find arrived processes
-        let available = [];
-        for (let i = 0; i < n; i++) {
-            if (processes[i].at <= time && processes[i].isDone === false) {
-                available.push(processes[i]);
-            }
-        }
+        let available = processes.filter(p => p.at <= time && !p.isDone);
 
         if (available.length > 0) {
-            // Sort by burst time
-            available.sort((a, b) => a.bt - b.bt);
+            available.sort((a, b) => a.bt - b.bt); // Sort by Burst Time
             let p = available[0];
 
             p.ct = time + p.bt;
@@ -152,17 +139,11 @@ function runSJF(processes) {
 
             gantt.push({ id: p.id, start: time, end: p.ct, duration: p.bt });
             resultArray.push(p);
-            
             time = p.ct;
             completed++;
         } else {
-            // CPU is idle
-            let nextArrival = 9999;
-            for(let i=0; i<n; i++) {
-                if(!processes[i].isDone && processes[i].at < nextArrival) {
-                    nextArrival = processes[i].at;
-                }
-            }
+            // Find next arrival time to skip idle period quickly
+            let nextArrival = Math.min(...processes.filter(p => !p.isDone).map(p => p.at));
             gantt.push({ id: "Idle", start: time, end: nextArrival, duration: nextArrival - time });
             time = nextArrival;
         }
@@ -170,22 +151,61 @@ function runSJF(processes) {
     return { processes: resultArray, gantt: gantt };
 }
 
-function runPriority(processes) {
-    let time = 0, completed = 0;
-    let gantt = [], resultArray = [];
+// NEW: SRTF (Preemptive SJF)
+function runSRTF(processes) {
+    let time = 0, completed = 0, gantt = [], resultArray = [];
     let n = processes.length;
 
     while (completed < n) {
-        let available = [];
-        for (let i = 0; i < n; i++) {
-            if (processes[i].at <= time && processes[i].isDone === false) {
-                available.push(processes[i]);
-            }
-        }
+        let available = processes.filter(p => p.at <= time && !p.isDone);
 
         if (available.length > 0) {
-            // Sort by priority (lower number = higher priority)
-            available.sort((a, b) => a.priority - b.priority);
+            // Sort by remaining time. If tie, sort by arrival time.
+            available.sort((a, b) => a.rem - b.rem || a.at - b.at);
+            let p = available[0];
+
+            // Execute for 1 unit of time
+            p.rem -= 1;
+            time += 1;
+
+            // Merge gantt blocks if same process continues
+            if (gantt.length > 0 && gantt[gantt.length - 1].id === p.id) {
+                gantt[gantt.length - 1].end = time;
+                gantt[gantt.length - 1].duration += 1;
+            } else {
+                gantt.push({ id: p.id, start: time - 1, end: time, duration: 1 });
+            }
+
+            // Check if process finished
+            if (p.rem === 0) {
+                p.ct = time;
+                p.tat = p.ct - p.at;
+                p.wt = p.tat - p.bt;
+                p.isDone = true;
+                resultArray.push(p);
+                completed++;
+            }
+        } else {
+            let nextArrival = Math.min(...processes.filter(p => !p.isDone).map(p => p.at));
+            gantt.push({ id: "Idle", start: time, end: nextArrival, duration: nextArrival - time });
+            time = nextArrival;
+        }
+    }
+    
+    // Restore original P1, P2 order for the table
+    resultArray.sort((a, b) => parseInt(a.id.replace('P', '')) - parseInt(b.id.replace('P', '')));
+    return { processes: resultArray, gantt: gantt };
+}
+
+function runPriority(processes) {
+    let time = 0, completed = 0, gantt = [], resultArray = [];
+    let n = processes.length;
+
+    while (completed < n) {
+        let available = processes.filter(p => p.at <= time && !p.isDone);
+
+        if (available.length > 0) {
+            available.sort((a, b) => a.priority - b.priority || a.at - b.at); // Sort by Priority
             let p = available[0];
 
             p.ct = time + p.bt;
@@ -195,20 +215,60 @@ function runPriority(processes) {
 
             gantt.push({ id: p.id, start: time, end: p.ct, duration: p.bt });
             resultArray.push(p);
-            
             time = p.ct;
             completed++;
         } else {
-            let nextArrival = 9999;
-            for(let i=0; i<n; i++) {
-                if(!processes[i].isDone && processes[i].at < nextArrival) {
-                    nextArrival = processes[i].at;
-                }
-            }
+            let nextArrival = Math.min(...processes.filter(p => !p.isDone).map(p => p.at));
             gantt.push({ id: "Idle", start: time, end: nextArrival, duration: nextArrival - time });
             time = nextArrival;
         }
     }
+    return { processes: resultArray, gantt: gantt };
+}
+
+// NEW: Preemptive Priority
+function runPreemptivePriority(processes) {
+    let time = 0, completed = 0, gantt = [], resultArray = [];
+    let n = processes.length;
+
+    while (completed < n) {
+        let available = processes.filter(p => p.at <= time && !p.isDone);
+
+        if (available.length > 0) {
+            // Sort by Priority (lower number = higher priority). If tie, arrival time.
+            available.sort((a, b) => a.priority - b.priority || a.at - b.at);
+            let p = available[0];
+
+            // Execute for 1 unit of time
+            p.rem -= 1;
+            time += 1;
+
+            // Merge gantt blocks if same process continues
+            if (gantt.length > 0 && gantt[gantt.length - 1].id === p.id) {
+                gantt[gantt.length - 1].end = time;
+                gantt[gantt.length - 1].duration += 1;
+            } else {
+                gantt.push({ id: p.id, start: time - 1, end: time, duration: 1 });
+            }
+
+            // Check if process finished
+            if (p.rem === 0) {
+                p.ct = time;
+                p.tat = p.ct - p.at;
+                p.wt = p.tat - p.bt;
+                p.isDone = true;
+                resultArray.push(p);
+                completed++;
+            }
+        } else {
+            let nextArrival = Math.min(...processes.filter(p => !p.isDone).map(p => p.at));
+            gantt.push({ id: "Idle", start: time, end: nextArrival, duration: nextArrival - time });
+            time = nextArrival;
+        }
+    }
+    
+    // Restore original P1, P2 order for the table
+    resultArray.sort((a, b) => parseInt(a.id.replace('P', '')) - parseInt(b.id.replace('P', '')));
     return { processes: resultArray, gantt: gantt };
 }
 
@@ -218,7 +278,6 @@ function runRR(processes, quantum) {
     let queue = [], gantt = [], resultArray = [];
 
     while (completed < n) {
-        // Add new arrivals to queue
         for (let i = 0; i < n; i++) {
             if (processes[i].at <= time && processes[i].isDone === false && !queue.includes(processes[i])) {
                 queue.push(processes[i]);
@@ -227,18 +286,12 @@ function runRR(processes, quantum) {
 
         if (queue.length > 0) {
             let p = queue.shift();
-            
-            // Execute for either quantum or remaining time
-            let executeTime = p.rem;
-            if (p.rem > quantum) {
-                executeTime = quantum;
-            }
+            let executeTime = p.rem > quantum ? quantum : p.rem;
 
             let start = time;
-            p.rem = p.rem - executeTime;
-            time = time + executeTime;
+            p.rem -= executeTime;
+            time += executeTime;
 
-            // Combine blocks if same process runs again immediately
             if (gantt.length > 0 && gantt[gantt.length - 1].id === p.id) {
                 gantt[gantt.length - 1].end = time;
                 gantt[gantt.length - 1].duration += executeTime;
@@ -246,7 +299,6 @@ function runRR(processes, quantum) {
                 gantt.push({ id: p.id, start: start, end: time, duration: executeTime });
             }
 
-            // Check arrivals during execution
             for (let i = 0; i < n; i++) {
                 if (processes[i].at <= time && processes[i].isDone === false && !queue.includes(processes[i]) && processes[i] !== p) {
                     queue.push(processes[i]);
@@ -261,28 +313,16 @@ function runRR(processes, quantum) {
                 resultArray.push(p);
                 completed++;
             } else {
-                queue.push(p); // Go back to end of line
+                queue.push(p); 
             }
         } else {
-            // Idle time
-            let nextArrival = 9999;
-            for(let i=0; i<n; i++) {
-                if(!processes[i].isDone && processes[i].at < nextArrival) {
-                    nextArrival = processes[i].at;
-                }
-            }
+            let nextArrival = Math.min(...processes.filter(p => !p.isDone).map(p => p.at));
             gantt.push({ id: "Idle", start: time, end: nextArrival, duration: nextArrival - time });
             time = nextArrival;
         }
     }
     
-    // Sort array back to original P1, P2 order for table
-    resultArray.sort((a, b) => {
-        let numA = parseInt(a.id.replace('P', ''));
-        let numB = parseInt(b.id.replace('P', ''));
-        return numA - numB;
-    });
-
+    resultArray.sort((a, b) => parseInt(a.id.replace('P', '')) - parseInt(b.id.replace('P', '')));
     return { processes: resultArray, gantt: gantt };
 }
 
@@ -325,7 +365,6 @@ function displayResults(processes) {
     html += `</table>`;
     tableContainer.innerHTML = html;
 
-    // Display Averages
     let avgTAT = sumTAT / processes.length;
     let avgWT = sumWT / processes.length;
 
@@ -335,7 +374,7 @@ function displayResults(processes) {
 
 function drawGanttChart(gantt) {
     let chartContainer = document.getElementById("ganttChart");
-    chartContainer.innerHTML = ""; // Clear old chart
+    chartContainer.innerHTML = ""; 
     
     if (gantt.length === 0) return;
 
@@ -350,19 +389,17 @@ function drawGanttChart(gantt) {
             div.classList.add("idle");
         }
 
-        // Width based on percentage of total time
         let widthPercent = (block.duration / totalTime) * 100;
         div.style.width = widthPercent + "%";
         div.innerHTML = block.id;
 
-        // Add 0 only on the very first block
         if (i === 0) {
             div.innerHTML += `<span class="start-time-label">${block.start}</span>`;
         }
         
-        // Add end time for every block
         div.innerHTML += `<span class="gantt-time">${block.end}</span>`;
         
         chartContainer.appendChild(div);
     }
-}
+        }
+            
