@@ -10,6 +10,8 @@ A simple web-based simulator for CPU scheduling algorithms built using HTML, CSS
 - Shortest Job First (SJF) Scheduling
 - Round Robin(RR) Scheduling
 - Priority Scheduling
+- preemptive SJF Scheduling 
+- premptive Priority Scheduling 
 - average Waiting time and Turn Around time 
 - Dynamic UI for algorithm-specific inputs
 - Calculates:
