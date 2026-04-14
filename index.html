@@ -3,52 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OS Scheduling Simulator</title>
+    <title>OS Scheduling Analyzer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="container">
-        <h1>CPU Scheduling Simulator</h1>
+    <div class="container">
+        <header>
+            <h1>CPU Scheduling Analyzer</h1>
+            <p>Simulate, Analyze, and Compare Algorithms</p>
+        </header>
+
+        <div id="errorBox" class="error-box hidden"></div>
         
-        <div class="input-section">
-            <label>Number of Processes: </label>
-            <input type="number" id="processCount" value="3" min="1">
-            <button onclick="createInputs()">Create Table</button>
+        <div class="card setup-card">
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Number of Processes: </label>
+                    <input type="number" id="processCount" value="4" min="1" max="10">
+                </div>
+                <button class="btn secondary" onclick="createInputs()">Generate Table</button>
+            </div>
+            <div id="dynamicInputs" class="mt-20"></div>
         </div>
 
-        <div id="dynamicInputs"></div>
+        <div id="controls" class="card hidden">
+            <div class="mode-toggle">
+                <label class="radio-label">
+                    <input type="radio" name="simMode" value="single" checked onchange="toggleMode()"> Single Algorithm
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="simMode" value="compare" onchange="toggleMode()"> Compare All
+                </label>
+            </div>
 
-        <div id="controls" class="hidden">
-            <label>Select Algorithm: </label>
-            <select id="algorithm" onchange="checkAlgorithm()">
-                <option value="FCFS">FCFS</option>
-                <option value="SJF">SJF (Non-Preemptive)</option>
-                <option value="SRTF">SRTF (Preemptive SJF)</option>
-                <option value="Priority">Priority (Non-Preemptive)</option>
-                <option value="Priority_Preemptive">Priority (Preemptive)</option>
-                <option value="RR">Round Robin</option>
-            </select>
+            <hr class="divider">
 
-            <span id="quantumDiv" class="hidden">
-                <label>Time Quantum: </label>
-                <input type="number" id="quantum" value="2" min="1">
-            </span>
+            <div class="controls-row">
+                <div id="singleControls" class="input-group">
+                    <label>Algorithm: </label>
+                    <select id="algorithm" onchange="checkAlgorithmUI()">
+                        <option value="FCFS">FCFS</option>
+                        <option value="SJF">SJF (Non-Preemptive)</option>
+                        <option value="SRTF">SRTF (Preemptive SJF)</option>
+                        <option value="Priority">Priority (Non-Preemptive)</option>
+                        <option value="Priority_Preemptive">Priority (Preemptive)</option>
+                        <option value="RR">Round Robin</option>
+                    </select>
 
-            <button class="run-btn" onclick="startSimulation()">Run Algorithm</button>
+                    <span id="quantumDiv" class="hidden">
+                        <label>Quantum: </label>
+                        <input type="number" id="quantum" value="2" min="1" style="width: 70px;">
+                    </span>
+                </div>
+                <button class="btn primary run-btn" onclick="startSimulation()">▶ Run Simulation</button>
+            </div>
         </div>
 
-        <div id="outputSection" class="hidden">
-            <h2>Result Table</h2>
-            <div id="tableContainer"></div>
+        <div id="explanationSection" class="explanation-box hidden"></div>
+
+        <div id="singleOutput" class="hidden">
+            <div class="card">
+                <div class="header-with-badges">
+                    <h2>Execution Results</h2>
+                    <div id="averages" class="badges-container"></div>
+                </div>
+                <div class="table-wrapper">
+                    <div id="tableContainer"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Gantt Chart</h2>
+                <div id="ganttChart" class="gantt-wrapper"></div>
+            </div>
+
+            <div class="card">
+                <h2>Execution Log</h2>
+                <ul id="executionLog" class="log-list"></ul>
+            </div>
+        </div>
+
+        <div id="compareOutput" class="hidden">
+            <div class="card winner-card" id="winnerBanner"></div>
             
-            <div id="averages"></div>
+            <div class="card chart-card">
+                <h2>Average Waiting Time Comparison</h2>
+                <div id="barChartContainer" class="chart-container"></div>
+            </div>
 
-            <h2>Gantt Chart</h2>
-            <div id="ganttChart"></div>
+            <div class="card">
+                <h2>Detailed Metrics</h2>
+                <div class="table-wrapper">
+                    <div id="comparisonTableContainer"></div>
+                </div>
+            </div>
         </div>
+
     </div>
 
-    <script src="script.js"></script>
+    <script src="algorithms.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
