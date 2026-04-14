@@ -1,116 +1,122 @@
+:root {
+    --bg: #f4f7f6;
+    --surface: #ffffff;
+    --text-main: #2d3748;
+    --text-muted: #718096;
+    --border: #e2e8f0;
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --secondary: #edf2f7;
+    --secondary-hover: #e2e8f0;
+    --success: #10b981;
+    --error: #ef4444;
+    --warning-bg: #fffbeb;
+    --warning-text: #b45309;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
-    text-align: center;
-    margin: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg);
+    color: var(--text-main);
+    line-height: 1.6;
+    padding: 40px 20px;
+    margin: 0;
 }
 
-#container {
-    background-color: white;
-    width: 80%;
-    margin: 0 auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    box-shadow: 2px 2px 10px lightgray;
-}
+.container { max-width: 950px; margin: 0 auto; }
+header { text-align: center; margin-bottom: 30px; }
+h1 { margin: 0 0 8px 0; color: #1a202c; font-size: 2.2rem; }
+header p { color: var(--text-muted); font-size: 1.1rem; margin: 0; }
 
-h1, h2 {
-    color: #333;
+/* Cards & Layout */
+.card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
 }
+.hidden { display: none !important; }
+.mt-20 { margin-top: 20px; }
+.divider { border: 0; border-top: 1px solid var(--border); margin: 20px 0; }
 
-.input-section, #controls {
-    margin: 20px 0;
-    padding: 15px;
-    background-color: #f0f0f0;
-    border: 1px solid #ddd;
-}
+/* Inputs & Buttons aligned perfectly */
+.input-row, .controls-row { display: flex; align-items: flex-end; gap: 15px; flex-wrap: wrap; }
+.input-group { display: flex; flex-direction: column; gap: 6px; }
+label { font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
 
 input, select {
-    padding: 5px;
-    margin: 5px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s;
+    background: #f8fafc;
 }
+input:focus, select:focus { border-color: var(--primary); outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
 
-button {
-    padding: 8px 15px;
-    background-color: #0066cc;
-    color: white;
+.btn {
+    padding: 10px 20px;
     border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
     cursor: pointer;
-}
-
-button:hover {
-    background-color: #004c99;
-}
-
-.run-btn {
-    background-color: #28a745;
-}
-
-.hidden {
-    display: none;
-}
-
-/* Table styling */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-table, th, td {
-    border: 1px solid black;
-}
-
-th, td {
-    padding: 10px;
-    text-align: center;
-}
-
-th {
-    background-color: #e6e6e6;
-}
-
-#averages {
-    margin: 20px 0;
-    font-size: 18px;
-    font-weight: bold;
-    color: #b30000;
-}
-
-/* Basic Gantt Chart styling */
-#ganttChart {
-    display: flex;
-    height: 60px;
-    border: 2px solid black;
-    margin-top: 10px;
-    margin-bottom: 30px;
-}
-
-.gantt-block {
+    transition: all 0.2s;
+    height: 42px; /* Matches input height */
     display: flex;
     align-items: center;
     justify-content: center;
-    border-right: 1px solid black;
-    position: relative;
-    background-color: lightblue; /* Standard student project color */
-    font-weight: bold;
 }
+.primary { background: var(--primary); color: white; }
+.primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.secondary { background: var(--secondary); color: var(--text-main); border: 1px solid var(--border); }
+.secondary:hover { background: var(--secondary-hover); }
+.run-btn { margin-left: auto; padding: 10px 30px; } /* Pushes to the right */
 
-.gantt-block.idle {
-    background-color: lightgray;
-    color: dimgray;
-}
+/* Mode Toggle */
+.mode-toggle { display: flex; gap: 30px; }
+.radio-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; color: var(--primary); font-size: 1.05rem; }
+.radio-label input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
 
-.gantt-time {
-    position: absolute;
-    bottom: -25px;
-    right: -5px;
-    font-size: 14px;
-}
+/* Modern Tables */
+.table-wrapper { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th, td { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+th { background: #f8fafc; font-weight: 600; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
+tbody tr:hover { background: #f8fafc; }
+tbody tr:last-child td { border-bottom: none; }
 
-.start-time-label {
-    position: absolute;
-    bottom: -25px;
-    left: 0;
-    font-size: 14px;
-}
+/* Gantt Chart */
+.gantt-wrapper { display: flex; height: 60px; border-radius: 8px; overflow: hidden; margin-top: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.06); background: #e2e8f0; }
+.gantt-block { display: flex; align-items: center; justify-content: center; position: relative; font-weight: 600; color: #fff; border-right: 1px solid rgba(255,255,255,0.2); transition: filter 0.2s; }
+.gantt-block:hover { filter: brightness(0.9); }
+.gantt-block:last-child { border-right: none; }
+.gantt-block.idle { background: repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 10px, #e2e8f0 10px, #e2e8f0 20px) !important; color: #475569; font-weight: normal; }
+.gantt-time { position: absolute; bottom: -28px; right: 0; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); transform: translateX(50%); }
+.start-time { position: absolute; bottom: -28px; left: 0; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); transform: translateX(-50%); }
+
+/* Pure CSS Bar Chart */
+.chart-container { display: flex; align-items: flex-end; justify-content: space-around; height: 250px; padding: 20px 10px 40px 10px; border-bottom: 2px solid var(--border); border-left: 2px solid var(--border); margin-top: 20px; }
+.bar-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 12%; position: relative; }
+.bar { width: 100%; background: var(--primary); border-radius: 6px 6px 0 0; transition: height 0.5s ease-out; position: relative; min-height: 2px; }
+.bar:hover { background: var(--primary-hover); }
+.bar-value { position: absolute; top: -25px; font-weight: bold; font-size: 0.9rem; color: var(--text-main); }
+.bar-label { position: absolute; bottom: -35px; text-align: center; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); width: 150%; word-wrap: break-word; }
+
+/* Explanation & Winners */
+.explanation-box { background: var(--warning-bg); border-left: 4px solid #f59e0b; padding: 20px; border-radius: 0 8px 8px 0; margin-bottom: 24px; color: var(--warning-text); }
+.explanation-box h3 { margin: 0 0 10px 0; color: #92400e; }
+.winner-card { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid #a7f3d0; text-align: center; }
+.winner-card h2 { color: #065f46; margin: 0 0 10px 0; font-size: 1.8rem; }
+
+/* Badges & Logs */
+.header-with-badges { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.badges-container { display: flex; gap: 15px; }
+.badge { background: #eff6ff; color: #1e40af; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; border: 1px solid #bfdbfe; }
+.log-list { list-style: none; padding: 0; margin: 0; font-family: 'Courier New', monospace; font-size: 0.9rem; max-height: 250px; overflow-y: auto; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
+.log-list li { margin-bottom: 8px; color: #475569; }
+
+/* Error box */
+.error-box { background: #fee2e2; border-left: 4px solid var(--error); color: #991b1b; padding: 15px; margin-bottom: 20px; border-radius: 0 8px 8px 0; font-weight: 600; }
