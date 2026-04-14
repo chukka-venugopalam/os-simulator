@@ -1,80 +1,65 @@
-# OS Scheduling Simulator
+# OS Scheduling Simulator & Analyzer
 
-A simple web-based simulator for CPU scheduling algorithms built using HTML, CSS, and JavaScript.
+An interactive web-based tool to simulate, visualize, and compare CPU scheduling algorithms in real-time. Designed for students preparing for GATE, OS exams, and technical interviews.
 
----
+##  Features
 
-## Features
+###  Simulation Modes
+- Single Algorithm Execution
+- Compare All Algorithms
 
-- First Come First Serve (FCFS) Scheduling
-- Shortest Job First (SJF) Scheduling
-- Round Robin(RR) Scheduling
-- Priority Scheduling
-- preemptive SJF Scheduling 
-- premptive Priority Scheduling 
-- average Waiting time and Turn Around time 
-- Dynamic UI for algorithm-specific inputs
-- Calculates:
+###  Supported Algorithms
+- FCFS (First Come First Serve)
+- SJF (Non-Preemptive)
+- SRTF (Preemptive SJF)
+- Priority Scheduling (Preemptive & Non-Preemptive)
+- Round Robin (with Quantum)
+
+###  Key Functionalities
+- Dynamic process input generation
+- Real-time Gantt Chart visualization
+- Step-by-step execution logs
+- Automatic calculation of:
   - Completion Time (CT)
   - Turnaround Time (TAT)
   - Waiting Time (WT)
-- Displays results in a structured table
-- Basic Gantt Chart visualization
+- Performance comparison with ranking
+- Smart “Best Algorithm” detection
+- Visual bar chart comparison
 
----
+###  UI Highlights
+- Clean card-based modern interface
+- Responsive design
+- Error handling for invalid inputs
+- Algorithm explanation panel
 
-## Tech Stack
+##  Learning Outcomes
 
-- HTML
-- CSS
-- JavaScript
+- Understand CPU scheduling concepts visually
+- Compare algorithm efficiency
+- Strengthen OS fundamentals for GATE and interviews
 
----
+##  Tech Stack
 
-## Project Structure
-index.html   → Structure of the application
-style.css    → Styling and layout
-script.js    → Scheduling logic and DOM handling
+- HTML5
+- CSS3
+- JavaScript (Vanilla)
 
----
+##  Live Demo
+https://chukka-venugopalam.github.io/os-scheduling-simulator/
 
-## How to Run
-
-1. Download or clone the repository  
-2. Open `index.html` in any browser  
-3. Enter number of processes  
-4. Provide Arrival Time and Burst Time  
-5. Click **Run Simulation**
-
----
-
-## Sample Input
-P1: AT = 0, BT = 5
-P2: AT = 1, BT = 3
-P3: AT = 2, BT = 1
-
----
-
-## Output
-
-- Table showing CT, TAT, WT  
-- Gantt Chart showing execution order  
-
----
+##  Project Structure
+├── index.html 
+├── style.css 
+├── algorithms.js 
+└── main.js
 
 ##  Future Improvements
-- Improved Gantt Chart visualization
-- Better UI/UX
 
----
-
-##  Purpose
-
-This project is built to understand Operating System scheduling algorithms and visualize their behavior.
-
----
+- Add animation step controls (pause/step forward)
+- Add multi-core CPU simulation
+- Export results as PDF/CSV
+- Add real-time timeline animation
 
 ##  Author
-
-Chukka Venugopalam  
-CSE Student | GATE Aspirant
+Chukka Venugopalam
